@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entre a Paz e a Guerra</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            max-width: 800px;
+            width: 100%;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #scene {
+            margin-bottom: 20px;
+        }
+        #scene-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        #scene-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        #scene-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        @media (max-width: 600px) {
+            #game-container {
+                padding: 10px;
+            }
+            #scene-text {
+                font-size: 16px;
+            }
+            button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Entre a Paz e a Guerra</h1>
+        <div id="scene">
+            <h2 id="scene-title"></h2>
+            <p id="scene-text"></p>
+            <img id="scene-image" src="" alt="Cena do jogo">
+            <div id="scene-buttons"></div>
+        </div>
+    </div>
+    <script>
+        const scenes = {
+          // Cena 1
+          inicio: {
+            title: "Fronteira em Tensão",
+            text: "Você é o comandante responsável pela segurança da fronteira. Mensageiros trazem rumores de tropas inimigas se aproximando. Você tem pouco tempo para decidir.",
+            img:"imagens/1.png",
+            options: [
+              { text: "Preparar ataque preventivo", to: "ataque_preventivo", note: "decisao_ataque" },
+              { text: "Convocar líderes para negociar", to: "convocar_diplomacia", note: "decisao_diplomacia" }
+            ]
+          },
+
+          // Cena 2
+          ataque_preventivo: {
+            title: "Marcha das Tropas",
+            text: "Suas tropas avançam ao amanhecer. O horizonte se enche de fumaça. Há coragem e risco. Um destacamento local reporta posições inimigas à frente.",
+            img: "imagens/2.png",
+            options: [
+              { text: "Enviar batedores para verificar (escolha cautelosa)", to: "batedores", note: "info_extra" },
+              { text: "Continuar o ataque sem checar (escolha arriscada)", to: "ataque_rapido", note: "decisao_arriscada" }
+            ]
+          },
+
+          batedores: {
+            title: "Relatório dos Batedores",
+            text: "Os batedores retornam: o inimigo está mais forte que o previsto, mas com uma falha no flanco esquerdo. Isso abre uma oportunidade — porém as comunicações mostram civis na região.",
+            img: "imagens/3.png",
+            options: [
+              { text: "Explorar a falha do flanco (atacar o ponto fraco)", to: "flanco_explorado", note: "vai_guerra" },
+              { text: "Preservar civis e recuar parcialmente", to: "recuo_cauteloso", note: "vai_neutro" }
+            ]
+          },
+
+          ataque_rapido: {
+            title: "Avanço Impetuoso",
+            text: "Você ordena ataque imediato. A batalha é surpresa, porém o inimigo estava preparado: minas e emboscadas causam baixas pesadas.",
+            img: "imagens/4.png",
+            options: [
+              { text: "Ordenar retirada tática", to: "retirada_tatica", note: "consequencia_perda" },
+              { text: "Persistir e empurrar a linha inimiga", to: "empurrar_linha", note: "alto_risco" }
+            ]
+          },
+
+          flanco_explorado: {
+            title: "Golpe ao Flanco",
+            text: "O ataque ao flanco inimigo funciona. Sua tropa consegue vantagem, mas a vitória custa vidas e o confronto se intensifica: agora é guerra declarada.",
+            img: "imagens/5.png",
+            options: [
+              { text: "Pressionar até a rendição do inimigo", to: "final_belico_vitoria", note: "final_belico" },
+              { text: "Parar e propor rendição com termos", to: "propor_termos_pos_batalha", note: "decisao_diplomatica_pos_batalha" }
+            ]
+          },
+
+          recuo_cauteloso: {
+            title: "Recuo com Civis",
+            text: "Você ordena recuo parcial e coordena evacuação dos civis. O inimigo avança, mas sem confronto direto imediato. A situação permanece tensa.",
+            img: "imagens/6.png",
+            options: [
+              { text: "Continuar negociações por via diplomática", to: "convocar_diplomacia", note: "vai_paz_pos_recuo" },
+              { text: "Reforçar posições defensivas", to: "fortificar", note: "vai_neutro" }
+            ]
+          },
+
+          retirada_tatica: {
+            title: "Retirada Tática",
+            text: "A retirada salva parte das tropas, mas deixa terreno e suprimentos para o inimigo. Sua reputação entre alguns oficiais cai.",
+            img: "imagens/7.png",
+            options: [
+              { text: "Reagrupar e tentar contra-ofensiva", to: "reagrupar", note: "tentativa_contrataque" },
+              { text: "Buscar acordo para cessar fogo", to: "convocar_diplomacia", note: "vai_diplomacia" }
+            ]
+          },
+
+          empurrar_linha: {
+            title: "Empurrar a Linha",
+            text: "Você insiste no avanço. A batalha se torna feroz: há ganhos territoriais, mas as perdas humanas são severas. A opinião pública começa a questionar.",
+            img: "imagens/8.png",
+            options: [
+              { text: "Executar cerco final", to: "cerco_final", note: "vai_guerra_escalada" },
+              { text: "Pedir trégua humanitária", to: "pedido_tregua", note: "tentativa_paz" }
+            ]
+          },
+
+          // caminho alternativo
+          convocar_diplomacia: {
+            title: "Mesa de Negociações",
+            text: "Você convoca os líderes adversários para negociar. A atmosfera é tensa; cada palavra pode selar paz ou inflamar o conflito.",
+            img: "imagens/9.png",
+            options: [
+              { text: "Oferecer concessões estratégicas", to: "concessoes", note: "vai_paz" },
+              { text: "Exigir retirada completa", to: "exigir_retirada", note: "ultimato" }
+            ]
+          },
+
+          concessoes: {
+            title: "Concessões Aceitas",
+            text: "Os líderes aceitarem concessões: pequenos territórios e garantias civis. Paz aparente; porém, elementos radicais se sentem traídos e podem tentar sabotar.",
+            img: "imagens/10.png",
+            options: [
+              { text: "Assinar o acordo (final pacífico)", to: "final_pacifico", note: "final_paz" },
+              { text: "Implementar segurança para prevenir sabotagem", to: "seguranca_apos_acordo", note: "precaucao" }
+            ]
+          },
+
+          exigir_retirada: {
+            title: "Ultimato",
+            text: "Você exige retirada. O outro lado recusa e rompe negociaões. A tensão explode e as armas retomam o palco.",
+            img: "imagens/11.png",
+            options: [
+              { text: "Ordenar preparar defesas (volta ao campo)", to: "fortificar", note: "vai_batalha" },
+              { text: "Tentar apaziguar com emissários", to: "ultima_tentativa", note: "ultima_chance" }
+            ]
+          },
+
+          seguranca_apos_acordo: {
+            title: "Segurança e Reconciliação",
+            text: "Você implementa medidas para impedir sabotagem. A paz é frágil, mas sustentável se houver vigilância e boa vontade.",
+            img: "imagens/12.png",
+            options: [
+              { text: "Manter acordo e investir em reconstrução", to: "final_pacifico", note: "final_paz" },
+              { text: "Descuidar da segurança (risco)", to: "sabotagem", note: "risco_sabotagem" }
+            ]
+          },
+
+          ultima_tentativa: {
+            title: "Última Tentativa",
+            text: "Emissários correm entre tendas. Há uma janela estreita para um entendimento, mas o tempo está contra você.",
+            img: "imagens/13.png",
+            options: [
+              { text: "Conceder uma garantia simbólica", to: "concessoes", note: "abrir_paz" },
+              { text: "Não ceder — preparar defesa", to: "fortificar", note: "vai_guerra" }
+            ]
+          },
+
+          fortificar: {
+            title: "Fortalecer Defesas",
+            text: "Você ordena fortificações e redistribui suprimentos. O cenário fica de espera: ambas as partes se preparam para qualquer eventualidade.",
+            img: "imagens/14.png",
+            options: [
+              { text: "Manter postura defensiva e negociar", to: "convocar_diplomacia", note: "tentar_paz" },
+              { text: "Lançar ofensiva preventiva", to: "ataque_preventivo", note: "reiniciar_ataque" }
+            ]
+          },
+
+          reagrupar: {
+            title: "Reagrupamento",
+            text: "Você reagrupa as forças, reavalia logística e moral. Há chance de virar o jogo, mas o tempo e recursos são poucos.",
+            img: "imagens/15.png",
+            options: [
+              { text: "Planear contra-ofensiva cuidadosa", to: "plano_contra_ofensiva", note: "planejar" },
+              { text: "Pedir ajuda externa e negociar", to: "convocar_diplomacia", note: "buscar_aliados" }
+            ]
+          },
+
+          plano_contra_ofensiva: {
+            title: "Plano de Contra-Ofensiva",
+            text: "Um ataque coordenado pode recuperar terreno. Se falhar, a perda será decisiva.",
+            img: "imagens/16.png",
+            options: [
+              { text: "Executar plano", to: "cerco_final", note: "alto_risco" },
+              { text: "Abortar e negociar", to: "convocar_diplomacia", note: "desistir_para_paz" }
+            ]
+          },
+
+          cerco_final: {
+            title: "Cerco Final",
+            text: "As forças se concentram para um cerco que decidirá o conflito. A cidade sofre, e a decisão do comandante será lembrada por gerações.",
+            img: "imagens/17.png",
+            options: [
+              { text: "Forçar capitulação (final bélico)", to: "final_belico_vitoria", note: "final_belico" },
+              { text: "Propor evacuação e rendição honrosa", to: "final_pacifico_ambivalente", note: "final_paz_ambigua" }
+            ]
+          },
+
+          pedido_tregua: {
+            title: "Pedido de Trégua",
+            text: "Um mensageiro pede trégua por causa de civis. É uma oportunidade de repensar o caminho.",
+            img: "imagens/18.png",
+            options: [
+              { text: "Aceitar trégua e negociar (vai paz)", to: "concessoes", note: "trégua" },
+              { text: "Recusar e esmagar resistência", to: "cerco_final", note: "ir_pra_guerra" }
+            ]
+          },
+
+          sabotagem: {
+            title: "Sabotagem",
+            text: "Grupos dissidentes explodem depósitos e tentam minar o acordo. A paz ruge se medidas não forem duras.",
+            img: "imagens/19.png",
+            options: [
+              { text: "Caçar sabotadores (medida dura)", to: "acao_dura", note: "repressao" },
+              { text: "Perdoar e reintegrar (medida conciliadora)", to: "final_pacifico", note: "reconciliacao" }
+            ]
+          },
+
+          acao_dura: {
+            title: "Ação Dura",
+            text: "A repressão funciona e os sabotadores são eliminados, mas a população fica dividida. Muitos temem o autoritarismo do comando. A paz é mantida à força, deixando feridas sociais profundas.",
+            img: "imagens/20.png",
+            options: [
+              { text: "Manter controle e reconstruir", to: "final_pacifico", note: "paz_com_custos" }
+            ]
+          },
+
+          final_belico_vitoria: {
+            title: "Vitória Amarga",
+            text: "Sua campanha triunfou militarmente. Cidade tomada, mas a destruição é vasta: ruas em ruínas, milhares deslocados. Você venceu a batalha, mas herdou uma paz frágil.",
+            img: "imagens/21.png",
+            options: []
+          },
+
+          final_pacifico: {
+            title: "Acordo e Reconstrução",
+            text: "Um acordo foi assinado. Haverá reconstrução e anos de reconciliação. Nem todos estão satisfeitos, mas a guerra foi evitada.",
+            img: "imagens/22.png",
+            options: []
+          },
+
+          final_pacifico_ambivalente: {
+            title: "Rendição Honrosa",
+            text: "Uma rendição negociada evita o cerco total. A cidade salva parte dos cidadãos, mas muitos consideram vergonhosa a derrota. O futuro permanece incerto.",
+            img: "imagens/23.png",
+            options: []
+          }
+        };
+
+        function loadScene(sceneId) {
+            const scene = scenes[sceneId];
+            const sceneImage = document.getElementById('scene-image');
+            const buttonsDiv = document.getElementById('scene-buttons');
+
+          
+            sceneImage.style.opacity = 0;
+
+            // transição
+            setTimeout(() => {
+                document.getElementById('scene-title').textContent = scene.title;
+                document.getElementById('scene-text').textContent = scene.text;
+                sceneImage.src = scene.img;
+
+                buttonsDiv.innerHTML = '';
+                if (scene.options.length > 0) {
+                    scene.options.forEach(option => {
+                        const button = document.createElement('button');
+                        button.textContent = option.text;
+                        button.onclick = () => loadScene(option.to);
+                        buttonsDiv.appendChild(button);
+                    });
+                } else {
+                    
+                    const restartButton = document.createElement('button');
+                    restartButton.textContent = 'Jogar Novamente';
+                    restartButton.onclick = () => loadScene('inicio');
+                    buttonsDiv.appendChild(restartButton);
+                }
+
+             
+                sceneImage.style.opacity = 1;
+            }, 500); 
+        }
+
+        // Iniciar o jogo
+        loadScene('inicio');
+    </script>
+</body>
+</html>
